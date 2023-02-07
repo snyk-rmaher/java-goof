@@ -1,0 +1,53 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:      
+    snyk_test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/setup-node@v3
+          with:
+              node-version: 16
+        - run: npm install snyk-to-html -g
+        - uses: actions/checkout@v3
+        - name: Run Snyk to check for vulnerabilities
+          uses: snyk/actions/node@master
+          env:
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          with:
+            command: test --json-file-output=results.json
+          continue-on-error: True
+        - run: snyk-to-html -i results.json -o snyk-test.html
+        - uses: actions/upload-artifact@v3
+          with:
+             name: snyk-test-results
+             path: /home/runner/work/Test-Goof/Test-Goof/snyk-test.html
+    
+    snyk_code_test:
+      permissions:
+        contents: read # for actions/checkout to fetch code
+        security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - name: Run Snyk to check for vulnerabilities
+          uses: snyk/actions/node@master
+          env:
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          with:
+            command: code test --sarif-file-output=snyk.sarif
+          continue-on-error: True
+        - name: Upload result to Github Code Scanning
+          uses: github/codeql-action/upload-sarif@v2
+          with:
+             sarif_file: snyk.sarif
