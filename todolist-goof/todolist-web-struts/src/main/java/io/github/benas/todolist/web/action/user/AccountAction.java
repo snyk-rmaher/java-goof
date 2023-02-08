@@ -34,7 +34,7 @@ import io.github.benas.todolist.web.common.form.RegistrationForm;
 import io.github.benas.todolist.web.common.util.TodoListUtils;
 import io.github.todolist.core.domain.User;
 
-import javax.validation.ConstraintViolation;
+// import javax.validation.ConstraintViolation;
 import java.text.MessageFormat;
 import java.util.Set;
 
